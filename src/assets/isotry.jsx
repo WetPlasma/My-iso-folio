@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useGLTF, useAnimations, useCursor } from "@react-three/drei";
-import { useFrame, useLoader } from "@react-three/fiber"; // 👈 Added useLoader
-import { AudioLoader } from "three"; // 👈 Added AudioLoader
+import { useFrame, useLoader } from "@react-three/fiber";
+import { AudioLoader } from "three";
 import * as THREE from "three";
 import { useStore } from "../store";
 
@@ -47,29 +47,41 @@ export function Model(props) {
   // Store
   const openProjects = useStore((state) => state.openProjects);
   const openAbout = useStore((state) => state.openAbout);
-  const started = useStore((state) => state.started); // 👈 Check if Start button clicked
+  const started = useStore((state) => state.started);
 
   // --- AUDIO LOADING ---
-  // 1. Force the loader to wait for music.mp3
-  useLoader(AudioLoader, "/music.mp3");
+  // Load Music AND Car Horn ONLY
+  useLoader(AudioLoader, ["/music.mp3", "/horn.mp3"]);
 
-  // 2. Setup Audio Logic
   const [musicOn, setMusicOn] = useState(true);
-  const [audio] = useState(() => new Audio("/music.mp3"));
 
-  useEffect(() => {
-    // Only play if the User has clicked START (started === true)
-    if (started && musicOn) {
+  // Background Music
+  const [bgMusic] = useState(() => {
+    const a = new Audio("/music.mp3");
+    a.loop = true;
+    return a;
+  });
+
+  // Horn SFX
+  const [hornSfx] = useState(() => new Audio("/horn.mp3"));
+
+  const playSfx = (audio) => {
+    if (audio) {
       audio.currentTime = 0;
       audio.volume = 0.5;
-      audio
-        .play()
-        .catch((e) => console.log("Audio play blocked (browser policy):", e));
+      audio.play().catch((e) => console.log("SFX Blocked", e));
+    }
+  };
+
+  // Music Logic
+  useEffect(() => {
+    if (started && musicOn) {
+      bgMusic.volume = 0.4;
+      bgMusic.play().catch((e) => console.log("Music play blocked:", e));
     } else {
-      audio.pause();
+      bgMusic.pause();
     }
 
-    // Animation Sync
     const action = actions["NoteWiggle"] || Object.values(actions)[0];
     if (action) {
       if (started && musicOn) {
@@ -78,14 +90,11 @@ export function Model(props) {
         action.fadeOut(0.5);
       }
     }
-  }, [started, musicOn, actions, audio]);
+  }, [started, musicOn, actions, bgMusic]);
 
   return (
     <group ref={group} {...props} dispose={null}>
       <group name="Scene">
-        {/* ... (SCENE GEOMETRY - COPY EXACTLY AS BEFORE or KEEP WHAT YOU HAD) ... */}
-        {/* I'm keeping the structure identical to your previous file for brevity */}
-
         <mesh
           name="base"
           castShadow
@@ -118,93 +127,81 @@ export function Model(props) {
           position={[0, -0.047, 0]}
         />
 
+        {/* STATIC DECOR */}
         <group name="lowvpoly_stylized_homeobjcleanermaterialmergergles">
           <mesh
-            name="Object_10"
             castShadow
             receiveShadow
             geometry={nodes.Object_10.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_11"
             castShadow
             receiveShadow
             geometry={nodes.Object_11.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_12"
             castShadow
             receiveShadow
             geometry={nodes.Object_12.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_13"
             castShadow
             receiveShadow
             geometry={nodes.Object_13.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_14"
             castShadow
             receiveShadow
             geometry={nodes.Object_14.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_15"
             castShadow
             receiveShadow
             geometry={nodes.Object_15.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_16"
             castShadow
             receiveShadow
             geometry={nodes.Object_16.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_17"
             castShadow
             receiveShadow
             geometry={nodes.Object_17.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_3"
             castShadow
             receiveShadow
             geometry={nodes.Object_3.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_4"
             castShadow
             receiveShadow
             geometry={nodes.Object_4.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_5"
             castShadow
             receiveShadow
             geometry={nodes.Object_5.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_6"
             castShadow
             receiveShadow
             geometry={nodes.Object_6.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_6002"
             castShadow
             receiveShadow
             geometry={nodes.Object_6002.geometry}
@@ -212,21 +209,18 @@ export function Model(props) {
             position={[0, 0, 3.719]}
           />
           <mesh
-            name="Object_7"
             castShadow
             receiveShadow
             geometry={nodes.Object_7.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_8"
             castShadow
             receiveShadow
             geometry={nodes.Object_8.geometry}
             material={materials["Material.001"]}
           />
           <mesh
-            name="Object_9"
             castShadow
             receiveShadow
             geometry={nodes.Object_9.geometry}
@@ -234,7 +228,7 @@ export function Model(props) {
           />
         </group>
 
-        {/* HOUSE (Pop ONLY, No Click) */}
+        {/* HOUSE (Silent) */}
         <Pop name="house" position={[-4.022, 1.546, -0.746]}>
           <mesh
             name="Object_0"
@@ -252,17 +246,15 @@ export function Model(props) {
           />
         </Pop>
 
-        {/* TREES (Pop ONLY) */}
+        {/* TREES (Silent) */}
         <Pop name="Pine5_Pine4_0" position={[-4.683, 0.677, -4.574]}>
           <mesh
-            name="Pine5_Pine4_0_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0_1.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0_2"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0_2.geometry}
@@ -331,14 +323,12 @@ export function Model(props) {
         </Pop>
         <Pop name="Pine5_Pine4_0001" position={[-3.216, 0.677, -4.456]}>
           <mesh
-            name="Pine5_Pine4_0008_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0008_1.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0008_2"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0008_2.geometry}
@@ -347,14 +337,12 @@ export function Model(props) {
         </Pop>
         <Pop name="Pine5_Pine4_0002" position={[-2.591, 0.671, -3.292]}>
           <mesh
-            name="Pine5_Pine4_0009_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0009_1.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0009_2"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0009_2.geometry}
@@ -363,14 +351,12 @@ export function Model(props) {
         </Pop>
         <Pop name="Pine5_Pine4_0003" position={[-3.802, 0.988, 1.888]}>
           <mesh
-            name="Pine5_Pine4_0010"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0010.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0010_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0010_1.geometry}
@@ -379,14 +365,12 @@ export function Model(props) {
         </Pop>
         <Pop name="Pine5_Pine4_0009" position={[-2.357, 0.664, 4.042]}>
           <mesh
-            name="Pine5_Pine4_0013"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0013.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0013_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0013_1.geometry}
@@ -406,14 +390,12 @@ export function Model(props) {
         </group>
         <Pop name="Pine5_Pine4_0007" position={[-2.722, 0.988, 2.05]}>
           <mesh
-            name="Pine5_Pine4_0014"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0014.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0014_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0014_1.geometry}
@@ -422,14 +404,12 @@ export function Model(props) {
         </Pop>
         <Pop name="Pine5_Pine4_0008" position={[-3.617, 0.732, 3.38]}>
           <mesh
-            name="Pine5_Pine4_0016"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0016.geometry}
             material={materials.Pine4}
           />
           <mesh
-            name="Pine5_Pine4_0016_1"
             castShadow
             receiveShadow
             geometry={nodes.Pine5_Pine4_0016_1.geometry}
@@ -444,7 +424,6 @@ export function Model(props) {
           <group name="Cube_0" />
         </group>
 
-        {/* BUSHES (Pop ONLY) */}
         <Pop name="Cube001" position={[1.966, 0.436, -3.773]}>
           <mesh
             castShadow
@@ -471,7 +450,7 @@ export function Model(props) {
           </group>
         </group>
 
-        {/* MAILBOX (CLICKABLE - ABOUT) */}
+        {/* MAILBOX (Opens About, Silent) */}
         <Pop
           name="mailbox"
           position={[1.606, 1.416, 4.513]}
@@ -529,7 +508,7 @@ export function Model(props) {
           </group>
         </group>
 
-        {/* WHITEBOARD (CLICKABLE - PROJECTS) */}
+        {/* WHITEBOARD (Opens Projects, Silent) */}
         <Pop
           name="whiteboard_pop"
           position={[-1.876, 1.894, -4.051]}
@@ -565,7 +544,7 @@ export function Model(props) {
           scale={[0.938, 1.335, 0.562]}
         />
 
-        {/* MUSIC BOX (CLICKABLE - TOGGLE) */}
+        {/* MUSIC BOX (Toggles Music, Silent) */}
         <Pop
           name="Musicbox"
           position={[3.093, 0.919, -1.948]}
@@ -616,7 +595,7 @@ export function Model(props) {
           </group>
         </Pop>
 
-        {/* MUSIC NOTES (ANIMATED) */}
+        {/* MUSIC NOTES */}
         <group
           name="music_notes"
           position={[3.254, 1.562, -2.477]}
@@ -639,21 +618,18 @@ export function Model(props) {
                   position={[-55.567, 13.253, -4.989]}
                 >
                   <mesh
-                    name="SM_MusicNote_01_lambert3_0_1"
                     castShadow
                     receiveShadow
                     geometry={nodes.SM_MusicNote_01_lambert3_0_1.geometry}
                     material={materials.lambert3}
                   />
                   <mesh
-                    name="SM_MusicNote_01_lambert3_0_2"
                     castShadow
                     receiveShadow
                     geometry={nodes.SM_MusicNote_01_lambert3_0_2.geometry}
                     material={materials.lambert1}
                   />
                   <mesh
-                    name="SM_MusicNote_01_lambert3_0_3"
                     castShadow
                     receiveShadow
                     geometry={nodes.SM_MusicNote_01_lambert3_0_3.geometry}
@@ -671,11 +647,15 @@ export function Model(props) {
           </group>
         </group>
 
-        {/* CAR (Pop ONLY) */}
+        {/* CAR: PLAYS HORN (KEPT) */}
         <Pop
           name="car"
           position={[-0.022, 0.948, 2.211]}
           rotation={[-Math.PI / 2, 0, 2.793]}
+          onClick={(e) => {
+            e.stopPropagation();
+            playSfx(hornSfx);
+          }}
         >
           <group
             name="9cf5c0df61c04d4d9bc145b59bbe6204fbx"
@@ -709,56 +689,48 @@ export function Model(props) {
                   scale={[120.529, 100, 100]}
                 >
                   <mesh
-                    name="Plane_calota_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_calota_0.geometry}
                     material={materials.calota}
                   />
                   <mesh
-                    name="Plane_espelho_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_espelho_0.geometry}
                     material={materials.espelho}
                   />
                   <mesh
-                    name="Plane_farol_frente_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_farol_frente_0.geometry}
                     material={materials.farol_frente}
                   />
                   <mesh
-                    name="Plane_lanterna_tarseira_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_lanterna_tarseira_0.geometry}
                     material={materials.lanterna_tarseira}
                   />
                   <mesh
-                    name="Plane_Material_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_Material_0.geometry}
                     material={materials["Material.012"]}
                   />
                   <mesh
-                    name="Plane_pneu_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_pneu_0.geometry}
                     material={materials.pneu}
                   />
                   <mesh
-                    name="Plane_principal_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_principal_0.geometry}
                     material={materials.principal}
                   />
                   <mesh
-                    name="Plane_seta_0"
                     castShadow
                     receiveShadow
                     geometry={nodes.Plane_seta_0.geometry}
